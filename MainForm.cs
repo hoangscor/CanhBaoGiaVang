@@ -144,7 +144,7 @@ namespace GoldPriceAlertWinForms
         {
             Text = "Gold Price Alert – MetalpriceAPI (Config-based)";
             StartPosition = FormStartPosition.CenterScreen;
-            MinimumSize = new Size(1150, 720);
+            MinimumSize = new Size(1300, 800);
             Font = new Font("Segoe UI", 10f);
 
             status = new StatusStrip();
@@ -166,25 +166,30 @@ namespace GoldPriceAlertWinForms
 
             // ---------- Dashboard ----------
             var dash = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(10), RowCount = 2, ColumnCount = 1 };
-            dash.RowStyles.Add(new RowStyle(SizeType.Absolute, 230));
+            dash.RowStyles.Add(new RowStyle(SizeType.Absolute, 300));
             dash.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
             tabDash.Controls.Add(dash);
 
+            //var summary = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 4 };
+            //for (int i = 0; i < 4; i++) summary.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25));
             var summary = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 4 };
-            for (int i = 0; i < 4; i++) summary.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25));
+            summary.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 28)); // Giá hiện tại
+            summary.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 28)); // Biến động
+            summary.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 24)); // Trạng thái
+            summary.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 20)); // Nút
             dash.Controls.Add(summary, 0, 0);
 
             Panel Card(string title, out Label main, out Label sub, float mainSize)
             {
                 var p = new Panel { Dock = DockStyle.Fill, BackColor = Color.WhiteSmoke, BorderStyle = BorderStyle.FixedSingle, Margin = new Padding(6), Padding = new Padding(12) };
                 var t = new Label { Text = title, AutoSize = true, Font = new Font(Font, FontStyle.Bold), ForeColor = Color.DimGray, Location = new Point(6, 6) };
-                main = new Label { Text = "-", AutoSize = true, Font = new Font("Segoe UI", mainSize, FontStyle.Bold), Location = new Point(6, 34) };
-                sub = new Label { Text = "", AutoSize = true, ForeColor = Color.Gray, Location = new Point(8, 104) };
+                main = new Label { Text = "-", AutoSize = true, Font = new Font("Segoe UI", mainSize, FontStyle.Bold), Location = new Point(10, 45) };
+                sub = new Label { Text = "", AutoSize = true, ForeColor = Color.Gray, Location = new Point(10, 140) };
                 p.Controls.Add(t); p.Controls.Add(main); p.Controls.Add(sub);
                 return p;
             }
 
-            summary.Controls.Add(Card("Giá hiện tại", out lblPrice, out lblUnit, 26), 0, 0);
+            summary.Controls.Add(Card("Giá hiện tại", out lblPrice, out lblUnit, 32), 0, 0);
             summary.Controls.Add(Card("Biến động", out lblDelta, out var sub2, 18), 1, 0);
             sub2.Text = "so với lần trước";
 
