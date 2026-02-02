@@ -1,4 +1,5 @@
-﻿using WinTimer = System.Windows.Forms.Timer;
+﻿// đỡ nhầm 
+using WinTimer = System.Windows.Forms.Timer;
 
 using System;
 using System.Collections.Generic;
@@ -27,6 +28,9 @@ namespace GoldPriceAlertWinForms
 {
     public sealed class MainForm : Form
     {
+        /// <summary>
+        /// 
+        /// </summary>
         // ===== Core services =====
         private readonly HttpClient _http = new HttpClient { Timeout = TimeSpan.FromSeconds(25) };
         private readonly SettingsStore _store = new SettingsStore();
@@ -37,6 +41,17 @@ namespace GoldPriceAlertWinForms
         private AppSettings _settings = new AppSettings();
 
         // ===== Runtime =====
+        // _pollLock: khóa chống Tick chạy chồng (Timer Tick tới liên tục)
+        // _cts: hủy request đang chạy khi Stop/Close
+        // _running: cờ trạng thái Start/Stop
+        // _lastPrice: giá lần trước -> tính delta
+        // _lastAlertUtc: thời điểm gửi alert gần nhất -> cooldown
+
+        /// <summary>
+        /// // timer: nhịp poll theo phút
+        // Tick -> gọi PollOnceAsync()
+        // Interval set trong ApplyTimerInterval()
+        /// </summary>
         private readonly List<PriceHistoryRow> _history = new();
         private readonly BindingSource _bsHistory = new();
         private readonly SemaphoreSlim _pollLock = new(1, 1);
@@ -412,6 +427,7 @@ namespace GoldPriceAlertWinForms
             });
 
             // Timer + Tray
+            // dừng ở StartAsync() / Stop()
             timer = new WinTimer();
 
 
@@ -454,7 +470,8 @@ namespace GoldPriceAlertWinForms
             btnSaveCfg.Click += (_, __) => SaveToFile();
 
             chkDark.CheckedChanged += (_, __) => ApplyTheme(chkDark.Checked);
-
+            // force=false: chạy khi _running=true
+            // _pollLock PollOnceAsync: chặn chạy chồng khi tới sớm
             timer.Tick += async (_, __) => await PollOnceAsync(force: false);
 
             trayIcon.DoubleClick += (_, __) => RestoreFromTray();
@@ -522,6 +539,8 @@ namespace GoldPriceAlertWinForms
             txtRemoteUrl.Text = _settings.RemoteConfig.Url ?? "";
 
             ApplyTheme(_settings.DarkMode);
+            // Start trước: cho Tick chạy
+            // ApplyTimerInterval: set Interval theo PollMinutes + update "Next"
             ApplyTimerInterval();
         }
 
@@ -706,6 +725,7 @@ namespace GoldPriceAlertWinForms
         private void Stop()
         {
             if (!_running) return;
+            // Tắt nhịp  -> ngưng Tick
             timer.Stop();
             try { _cts.Cancel(); } catch { }
 
@@ -735,6 +755,7 @@ namespace GoldPriceAlertWinForms
         private async Task PollOnceAsync(bool force)
         {
             if (!_running && !force) return;
+            // không lấy được lock -> đang poll -> return
             if (!await _pollLock.WaitAsync(0)) return;
 
             try
